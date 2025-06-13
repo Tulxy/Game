@@ -13,8 +13,17 @@
 <body>
 
 <canvas id="canvas" width="1700" height="800" style="border: 2px black;"></canvas>
-<h1 style="display: flex; justify-content: center">SCORE: <span id="score"> 0</span><span style="margin-left: 10px">Collect 25 points to win</span></h1>
+<h1 style="display: flex; justify-content: center">
+  SCORE: <span id="score">0</span>
+  <span style="margin-left: 10px">Collect 25 points to win</span>
+  <span style="margin-left: 20px">TIME: <span id="time">0</span>s</span>
+</h1>
 
+<button class="replayBtn">Play again</button>
+
+<ul>
+
+</ul>
 
 <script>
   const canvas = document.getElementById("canvas");
@@ -22,6 +31,14 @@
 
   let score = -1;
   let gameOver = false;
+  let special = false;
+  let points = 0;
+
+  let isLoopRunning = false;
+
+  let elapsedTime = 0;
+  let timerInterval = null;
+
 
   // Physics
   const gravity = 1.2;
@@ -50,6 +67,7 @@
     }
   });
 
+  // All parts of canvas
   const point = {
     x: 200,
     y: 200,
@@ -87,6 +105,30 @@
     height: 20
   };
 
+  // All functions of the game
+  document.querySelector(".replayBtn").addEventListener("click", () => {
+    score = 0;
+    points = 0;
+    elapsedTime = 0;
+    gameOver = false;
+    document.getElementById("score").textContent = score;
+    document.getElementById("time").textContent = elapsedTime;
+
+    // Reset player
+    player.x = 200;
+    player.y = 700;
+    player.vx = 0;
+    player.vy = 0;
+    player.isOnGround = false;
+
+    // Restart timer
+    clearInterval(timerInterval);
+    startTimer();
+
+    collectPoint();
+    gameLoop();
+  });
+
   function isColliding(circle, rect) {
     const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
     const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
@@ -99,6 +141,16 @@
 
   function collectPoint() {
     score += 1;
+    points += 1;
+    document.getElementById('score').textContent = score;
+
+    point.x = Math.random() * (border.width - point.width);
+    point.y = Math.random() * (border.height - point.height);
+  }
+
+  function collectSpecialPoint() {
+    score += 3;
+    points += 1;
     document.getElementById('score').textContent = score;
 
     point.x = Math.random() * (border.width - point.width);
@@ -136,7 +188,7 @@
   function spawnSpecialPoint() {
     ctx.beginPath();
     ctx.arc(point.x + point.width / 2, point.y + point.height / 2, point.width / 2, 0, Math.PI * 2);
-    ctx.fillStyle = "orange";
+    ctx.fillStyle = "darkorange";
     ctx.fill();
     ctx.strokeStyle = "#ff4600";
     ctx.stroke();
@@ -191,36 +243,70 @@
   }
 
   function win() {
+    clearInterval(timerInterval)
+    document.getElementById("final-time").textContent = elapsedTime.toString();
     ctx.font = "120px Arial";
     ctx.textAlign = "center";
     ctx.fillText("You WIN!", (canvas.clientWidth / 2), (canvas.clientHeight / 2));
   }
 
-  function gameLoop() {
-    if (gameOver) return;
-
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-    updatePlayer();
-    drawBorder();
-    drawPlayer();
-    spawnPoint();
-    spawnSpecialPoint();
-    spawnJumper();
-    setGround();
-
-    if (isColliding(player, point)) {
-      collectPoint();
-    }
-
-    if (score === 25) {
-      win();
-      gameOver = true;
-      return;
-    }
-    requestAnimationFrame(gameLoop);
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      elapsedTime++;
+      document.getElementById('time').textContent = elapsedTime;
+    }, 1000);
   }
 
+  function gameLoop() {
+    if (gameOver || isLoopRunning) return;
+
+    isLoopRunning = true;
+
+    function loop() {
+      if (gameOver) {
+        isLoopRunning = false;
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      updatePlayer();
+      drawBorder();
+      drawPlayer();
+      spawnPoint();
+
+      if (points !== 0 && points % 5 === 0) {
+        special = true;
+        spawnSpecialPoint();
+        if (isColliding(player, point)) {
+          collectSpecialPoint();
+        }
+      } else {
+        special = false;
+        spawnPoint();
+        if (isColliding(player, point)) {
+          collectPoint();
+        }
+      }
+
+      spawnJumper();
+      setGround();
+
+      if (score >= 25) {
+        win();
+        gameOver = true;
+        isLoopRunning = false;
+        return;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+
+  startTimer();
   collectPoint();
   gameLoop();
 
