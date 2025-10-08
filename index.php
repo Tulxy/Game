@@ -1,5 +1,7 @@
 <?php
+
 ?>
+
 
 <!doctype html>
 <html lang="en">
@@ -8,18 +10,20 @@
   <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
   <title>Index</title>
 </head>
-<body>
+<body class="bg-dark text-white">
 
 <canvas id="canvas" width="1700" height="800" style="border: 2px black;"></canvas>
-<h1 style="display: flex; justify-content: center">
-  SCORE: <span id="score">0</span>
-  <span style="margin-left: 10px">Collect 25 points to win</span>
-  <span style="margin-left: 20px">TIME: <span id="time">0</span>s</span>
+<h1 class="d-flex p-2 bg-primary justify-content-center align-items-center">
+  SCORE: <span class="m-2 p-2" id="score">0</span>
+  <span class="m-2 p-2">Collect 25 points to win</span>
+  <span class="m-2 p-2">TIME: <span id="time">0 </span></span>
+  <span class="m-2 p-2">BEST TIME: <span id="bestTime">0</span></span>
 </h1>
 
-<button class="replayBtn">Play again</button>
+<button class="replayBtn btn btn-primary p-2 ms-3">Play again</button>
 
 <ul>
 
@@ -243,8 +247,21 @@
   }
 
   function win() {
-    clearInterval(timerInterval)
-    document.getElementById("final-time").textContent = elapsedTime.toString();
+    clearInterval(timerInterval);
+
+    const newTime = document.createElement('li');
+    newTime.classList.add('time');
+    newTime.textContent = `Time: ${elapsedTime}s`;
+
+    const timesList = document.querySelector('ul');
+    timesList.appendChild(newTime);
+
+    const bestTimeElement = document.getElementById('bestTime');
+    const currentBestTime = parseInt(bestTimeElement.textContent);
+    if (currentBestTime === 0 || elapsedTime < currentBestTime) {
+      bestTimeElement.textContent = elapsedTime;
+    }
+
     ctx.font = "120px Arial";
     ctx.textAlign = "center";
     ctx.fillText("You WIN!", (canvas.clientWidth / 2), (canvas.clientHeight / 2));
